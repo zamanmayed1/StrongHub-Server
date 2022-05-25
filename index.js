@@ -3,7 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser')
 const jwt = require('jsonwebtoken');
 require('dotenv').config()
-const { MongoClient, ServerApiVersion ,ObjectId} = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 const app = express()
 // middleware
@@ -35,29 +35,28 @@ async function run() {
     try {
         await client.connect();
         const ProductsCollection = client.db("ProductsCollection").collection("products");
+        const OrderCollection = client.db("OrderCollection").collection("order");
+        const Usercollection = client.db("Usercollection").collection("users");
 
-        console.log('Mongodb Connected');
 
+        // Logged USer Data
 
-        app.post('/login', (req, res) => {
-            const user = req.body;
-            console.log(user);
-
-            if (user) {
-                const accessToken = jwt.sign({
-                    email: user.email
-                },
-                    process.env.ACCESS_TOKEN_SECRET,
-                    { expiresIn: '1h' })
-                res.send({
-                    success: true,
-                    accessToken: accessToken
-                })
-            }
-            else {
-                res.status(401).send({ success: false });
-            }
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email
+            const user = req.body
+            const filter = { email: email }
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user
+            };
+            const result = await Usercollection.updateOne(filter, updateDoc, options);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            res.send({ result, token })
         })
+
+
+
+
         // Get All Products
         app.get('/products', async (req, res) => {
             const query = {};
@@ -72,6 +71,31 @@ async function run() {
             res.send(result)
 
         })
+
+        // Update Product After Order
+        app.put('/product/:id', async (req, res) => {
+            const id = req.params.id
+            console.log(id);
+            const Updatedproductquantity = req.body
+            console.log(Updatedproductquantity.reamining);
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    availableQuantity: Updatedproductquantity.reamining
+                }
+            };
+            const result = await ProductsCollection.updateOne(filter, updateDoc, options);
+            res.send(result)
+        })
+
+        // Add A Order
+        app.post('/addorder', async (req, res) => {
+            const order = req.body
+            const result = await OrderCollection.insertOne(order);
+            res.send(result)
+
+        })
         // get a single Product
         app.get('/product/:id', async (req, res) => {
             const id = req.params.id
@@ -79,6 +103,19 @@ async function run() {
             const result = await ProductsCollection.findOne(query)
             res.send(result)
         })
+
+        // Put User On mongo server
+        // app.put('/user/:email', async (req, res) => {
+        //     const email = req.params.email
+        //     const user = req.body
+        //     const filter = { email: email }
+        //     const options = { upsert: true }
+        //     const updateDoc = {
+        //         $set: user
+        //     }
+        //     const result = await Usercollection.updateOne(filter, updateDoc, options)
+        //     res.send(result)
+        // })
 
 
         app.get('/', (req, res) => {
