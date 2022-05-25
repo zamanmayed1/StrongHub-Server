@@ -37,9 +37,10 @@ async function run() {
         const ProductsCollection = client.db("ProductsCollection").collection("products");
         const OrderCollection = client.db("OrderCollection").collection("order");
         const Usercollection = client.db("Usercollection").collection("users");
+        const ReviewCollection = client.db("ReviewCollection").collection("review");
 
 
-        // Logged USer Data
+        // Send Logged User Data on server
 
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email
@@ -54,14 +55,72 @@ async function run() {
             res.send({ result, token })
         })
 
+        // Update User Info
+        app.put('/myprofile/:email', async (req, res) => {
+            const email = req.params.email
+            const updateUser = req.body
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDocument = {
+                $set: updateUser
+            };
+            const result = await Usercollection.updateOne(filter, updateDocument, options)
 
+            res.send(result)
+
+        })
+
+        // Admin Check
+        app.get('/admin/:email', async (req, res) => {
+            const email = req.params.email
+            const user = await Usercollection.findOne({ email: email })
+            const isadmin = user?.role === 'admin'
+            res.send({ admin: isadmin })
+
+        })
+
+        // Make Admin Api
+
+        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email
+            const requester = req.decoded.email
+            const requesterAccount = await Usercollection.findOne({ email: requester })
+            if (requesterAccount.role == 'admin') {
+                const filter = { email: email }
+                const updateDoc = {
+                    $set: { role: 'admin' }
+                }
+                const result = await Usercollection.updateOne(filter, updateDoc)
+                res.send(result)
+            }
+            else {
+                return res.status(403).send({ message: 'Forbidden Access', erorCode: 403 })
+            }
+
+        })
+
+        // Get All USers
+        app.get('/users', async (req, res) => {
+            const query = {};
+            const cursor = Usercollection.find(query);
+            const result = (await cursor.toArray()).reverse()
+            res.send(result)
+        })
+        // Get user Data
+        app.get('/myfrofiledata/:email', async (req, res) => {
+            const email = req.params.email
+            const query = { email: email };
+            const cursor = Usercollection.find(query);
+            const result = await cursor.toArray()
+            res.send(result)
+        })
 
 
         // Get All Products
         app.get('/products', async (req, res) => {
             const query = {};
             const cursor = ProductsCollection.find(query);
-            const result = await cursor.toArray()
+            const result = (await cursor.toArray()).reverse()
             res.send(result)
         })
         // Add A Product
@@ -71,13 +130,18 @@ async function run() {
             res.send(result)
 
         })
+        // get a single Product
+        app.get('/product/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) };
+            const result = await ProductsCollection.findOne(query)
+            res.send(result)
+        })
 
         // Update Product After Order
         app.put('/product/:id', async (req, res) => {
             const id = req.params.id
-            console.log(id);
             const Updatedproductquantity = req.body
-            console.log(Updatedproductquantity.reamining);
             const filter = { _id: ObjectId(id) };
             const options = { upsert: true };
             const updateDoc = {
@@ -96,26 +160,54 @@ async function run() {
             res.send(result)
 
         })
-        // get a single Product
-        app.get('/product/:id', async (req, res) => {
-            const id = req.params.id
-            const query = { _id: ObjectId(id) };
-            const result = await ProductsCollection.findOne(query)
+        // Get All Order
+        app.get('/orders', async (req, res) => {
+            const query = {};
+            const cursor = OrderCollection.find(query);
+            const result = (await cursor.toArray()).reverse()
+            res.send(result)
+        })
+        // Get My Order
+        app.get('/myorder/:email', async (req, res) => {
+            const email = req.params.email
+            const query = { email: email };
+            const cursor = OrderCollection.find(query);
+            const result = await cursor.toArray()
             res.send(result)
         })
 
-        // Put User On mongo server
-        // app.put('/user/:email', async (req, res) => {
-        //     const email = req.params.email
-        //     const user = req.body
-        //     const filter = { email: email }
-        //     const options = { upsert: true }
-        //     const updateDoc = {
-        //         $set: user
-        //     }
-        //     const result = await Usercollection.updateOne(filter, updateDoc, options)
-        //     res.send(result)
-        // })
+        // Add A Review
+        app.post('/addreview', async (req, res) => {
+            const product = req.body
+            const result = await ReviewCollection.insertOne(product);
+            res.send(result)
+
+        })
+        // Get All Review
+        app.get('/reviews', async (req, res) => {
+            const query = {};
+            const cursor = ReviewCollection.find(query);
+            const result = (await cursor.toArray()).reverse()
+            res.send(result)
+        })
+
+        // Cancel Order   Api from my order page
+        app.delete('/order/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) };
+            const result = await OrderCollection.deleteOne(query);
+            res.send(result)
+
+        })
+        // Delete product Api
+        app.delete('/product/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) };
+            const result = await ProductsCollection.deleteOne(query);
+            res.send(result)
+
+        })
+
 
 
         app.get('/', (req, res) => {
