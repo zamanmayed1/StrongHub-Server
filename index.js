@@ -43,7 +43,7 @@ async function run() {
         // Send Logged User Data on server
 
         app.put('/user/:email', async (req, res) => {
-            const email = req.params.email.toLowerCase()
+            const email = req.params.email
             const user = req.body
             const filter = { email: email }
             const options = { upsert: true };
