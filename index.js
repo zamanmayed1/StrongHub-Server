@@ -183,7 +183,7 @@ async function run() {
             res.send(result)
 
         })
-        // Get All Review
+        // Get All Review from server
         app.get('/reviews', async (req, res) => {
             const query = {};
             const cursor = ReviewCollection.find(query);
