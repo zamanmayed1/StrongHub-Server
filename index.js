@@ -51,7 +51,7 @@ async function run() {
                 $set: user
             };
             const result = await Usercollection.updateOne(filter, updateDoc, options);
-            const token = jwt.sign({ email: email },process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
             res.send({ result, token })
         })
 
@@ -81,7 +81,7 @@ async function run() {
 
         // Make Admin Api
 
-        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+        app.put('/user/admin/:email', async (req, res) => {
             const email = req.params.email
             const requester = req.decoded.email
             const requesterAccount = await Usercollection.findOne({ email: requester })
