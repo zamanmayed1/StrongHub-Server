@@ -49,35 +49,35 @@ async function run() {
         const ReviewCollection = client.db("ReviewCollection").collection("review");
         const PaymentCollection = client.db("PaymentCollection").collection("payment");
 
-        // /save transitaion id by payment 
-        app.patch('/orders/:id', verifyJWT, async (req, res) => {
-            const id = req.params.id
-            const payment = req.body
-            const filter = { _id: ObjectId(id) }
-            const updateDoc = {
-                $set: {
-                    paid: true,
-                    transactionId: payment.transactionId,
+        // // /save transitaion id by payment 
+        // app.patch('/orders/:id', verifyJWT, async (req, res) => {
+        //     const id = req.params.id
+        //     const payment = req.body
+        //     const filter = { _id: ObjectId(id) }
+        //     const updateDoc = {
+        //         $set: {
+        //             paid: true,
+        //             transactionId: payment.transactionId,
 
-                }
-            }
-            const updateOrder = await OrderCollection.updateOne(filter, updateDoc)
-            const result = await PaymentCollection.insertOne(payment)
-            res.send(updateDoc)
-        })
-        // Payment
-        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
-            const service = req.body
-            console.log(service);
-            const price = service.price
-            const amount = price * 100
-            const paymentIntent = await stripe.paymentIntents.create({
-                amount: amount,
-                currency: 'usd',
-                payment_method_types: ['card']
-            })
-            res.send({ clientSecret: paymentIntent.client_secret })
-        })
+        //         }
+        //     }
+        //     const updateOrder = await OrderCollection.updateOne(filter, updateDoc)
+        //     const result = await PaymentCollection.insertOne(payment)
+        //     res.send(updateDoc)
+        // })
+        // // Payment
+        // app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+        //     const service = req.body
+        //     console.log(service);
+        //     const price = service.price
+        //     const amount = price * 100
+        //     const paymentIntent = await stripe.paymentIntents.create({
+        //         amount: amount,
+        //         currency: 'usd',
+        //         payment_method_types: ['card']
+        //     })
+        //     res.send({ clientSecret: paymentIntent.client_secret })
+        // })
 
 
         // Send Logged User Data on server
