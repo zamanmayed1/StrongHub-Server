@@ -3,6 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser')
 const jwt = require('jsonwebtoken');
 require('dotenv').config()
+const stripe = require('stripe')(process.env.STRIPE_KEY)
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 const app = express()
@@ -46,6 +47,37 @@ async function run() {
         const OrderCollection = client.db("OrderCollection").collection("order");
         const Usercollection = client.db("Usercollection").collection("users");
         const ReviewCollection = client.db("ReviewCollection").collection("review");
+        const PaymentCollection = client.db("PaymentCollection").collection("payment");
+
+        // /save transitaion id by payment 
+        app.patch('/orders/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id
+            const payment = req.body
+            const filter = { _id: ObjectId(id) }
+            const updateDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId,
+
+                }
+            }
+            const updateOrder = await OrderCollection.updateOne(filter, updateDoc)
+            const result = await PaymentCollection.insertOne(payment)
+            res.send(updateDoc)
+        })
+        // Payment
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+            const service = req.body
+            console.log(service);
+            const price = service.price
+            const amount = price * 100
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            })
+            res.send({ clientSecret: paymentIntent.client_secret })
+        })
 
 
         // Send Logged User Data on server
@@ -79,7 +111,7 @@ async function run() {
         })
 
         // Admin Check
-        app.get('/admin/:email', verifyJWT, async (req, res) => {
+        app.get('/admin/:email', async (req, res) => {
             const email = req.params.email
             const user = await Usercollection.findOne({ email: email })
             const isadmin = user?.role === 'admin'
@@ -87,22 +119,23 @@ async function run() {
 
         })
 
-        // Make Admin Api
 
-        app.put('/user/admin/:email', async (req, res) => {
+        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
             const email = req.params.email
             const requester = req.decoded.email
+            console.log(requester);
             const requesterAccount = await Usercollection.findOne({ email: requester })
-            if (requesterAccount.role == 'admin') {
+            if (requesterAccount.role === 'admin') {
                 const filter = { email: email }
+                const options = { upsert: true };
                 const updateDoc = {
                     $set: { role: 'admin' }
-                }
-                const result = await Usercollection.updateOne(filter, updateDoc)
+                };
+                const result = await Usercollection.updateOne(filter, updateDoc);
                 res.send(result)
             }
             else {
-                return res.status(403).send({ message: 'Forbidden Access', erorCode: 403 })
+                res.status(403).send({ message: 'forbiden access' })
             }
 
         })
@@ -175,6 +208,15 @@ async function run() {
             const result = (await cursor.toArray()).reverse()
             res.send(result)
         })
+        // Get a order
+        app.get('/order/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) }
+            const order = await OrderCollection.findOne(query)
+            res.send(order)
+        })
+
+
         // Get My Order
         app.get('/myorder/:email', async (req, res) => {
             const email = req.params.email
@@ -199,7 +241,7 @@ async function run() {
             res.send(result)
         })
 
-        // Cancel Order   Api from my order page
+        // Cancel Order  Api from my order page
         app.delete('/order/:id', async (req, res) => {
             const id = req.params.id
             const query = { _id: ObjectId(id) };
