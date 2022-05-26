@@ -17,19 +17,21 @@ app.use(
 app.use(express.json())
 app.use(bodyParser.json())
 
-const verifyJWT = (req, res, next) => {
+
+function verifyJWT(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
-        return res.status(401).send({ message: 'unauthorized' });
+        return res.status(401).send({ message: "UnAuthorized access" });
     }
-    const token = authHeader.split(' ')[1];
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    const token = authHeader.split(" ")[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
         if (err) {
-            return res.status(403).send({ message: 'forbidden' })
+            console.log(err);
+            return res.status(403).send({ message: "Forbidden access" });
         }
         req.decoded = decoded;
         next();
-    })
+    });
 }
 
 
@@ -62,7 +64,7 @@ async function run() {
         })
 
         // Update User Info
-        app.put('/myprofile/:email', async (req, res) => {
+        app.put('/myprofile/:email', verifyJWT, async (req, res) => {
             const email = req.params.email
             const updateUser = req.body
             const filter = { email: email };
@@ -77,7 +79,7 @@ async function run() {
         })
 
         // Admin Check
-        app.get('/admin/:email', async (req, res) => {
+        app.get('/admin/:email', verifyJWT, async (req, res) => {
             const email = req.params.email
             const user = await Usercollection.findOne({ email: email })
             const isadmin = user?.role === 'admin'
