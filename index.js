@@ -8,15 +8,21 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 const app = express()
 // middleware
-app.use(
-    cors({
-        origin: true,
-        optionsSuccessStatus: 200,
-        credentials: true,
-    })
-);
+app.use(cors());
+const corsConfig = {
+    origin: '*',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE']
+}
+app.use(cors(corsConfig))
+app.options("*", cors(corsConfig))
 app.use(express.json())
-app.use(bodyParser.json())
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin",
+        "*")
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With,Content-Type, Accept,authorization")
+    next()
+})
 
 
 function verifyJWT(req, res, next) {
@@ -49,36 +55,6 @@ async function run() {
         const ReviewCollection = client.db("ReviewCollection").collection("review");
         const PaymentCollection = client.db("PaymentCollection").collection("payment");
 
-        // // /save transitaion id by payment 
-        // app.patch('/orders/:id', verifyJWT, async (req, res) => {
-        //     const id = req.params.id
-        //     const payment = req.body
-        //     const filter = { _id: ObjectId(id) }
-        //     const updateDoc = {
-        //         $set: {
-        //             paid: true,
-        //             transactionId: payment.transactionId,
-
-        //         }
-        //     }
-        //     const updateOrder = await OrderCollection.updateOne(filter, updateDoc)
-        //     const result = await PaymentCollection.insertOne(payment)
-        //     res.send(updateDoc)
-        // })
-        // // Payment
-        // app.post('/create-payment-intent', verifyJWT, async (req, res) => {
-        //     const service = req.body
-        //     console.log(service);
-        //     const price = service.price
-        //     const amount = price * 100
-        //     const paymentIntent = await stripe.paymentIntents.create({
-        //         amount: amount,
-        //         currency: 'usd',
-        //         payment_method_types: ['card']
-        //     })
-        //     res.send({ clientSecret: paymentIntent.client_secret })
-        // })
-
 
         // Send Logged User Data on server
 
@@ -96,7 +72,7 @@ async function run() {
         })
 
         // Update User Info
-        app.put('/myprofile/:email', verifyJWT, async (req, res) => {
+        app.put('/myprofile/:email', async (req, res) => {
             const email = req.params.email
             const updateUser = req.body
             const filter = { email: email };
@@ -119,7 +95,7 @@ async function run() {
 
         })
 
-
+        // make admn api
         app.put('/user/admin/:email', verifyJWT, async (req, res) => {
             const email = req.params.email
             const requester = req.decoded.email
@@ -261,7 +237,7 @@ async function run() {
 
 
         app.get('/', (req, res) => {
-            res.send('Stock Room Server IS Running On Heroku ')
+            res.send('Strong Hub Room Server IS Running On Heroku ')
         })
 
     } finally {
