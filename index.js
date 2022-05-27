@@ -3,26 +3,26 @@ const cors = require('cors');
 const bodyParser = require('body-parser')
 const jwt = require('jsonwebtoken');
 require('dotenv').config()
-const stripe = require('stripe')(process.env.STRIPE_KEY)
+// const stripe = require('stripe')(process.env.STRIPE_KEY)
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 const app = express()
 // middleware
 app.use(cors());
-const corsConfig = {
-    origin: '*',
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE']
-}
-app.use(cors(corsConfig))
-app.options("*", cors(corsConfig))
-app.use(express.json())
-app.use(function (req, res, next) {
-    res.header("Access-Control-Allow-Origin",
-        "*")
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With,Content-Type, Accept,authorization")
-    next()
-})
+// const corsConfig = {
+//     origin: '*',
+//     credentials: true,
+//     methods: ['GET', 'POST', 'PUT', 'DELETE']
+// }
+// app.use(cors(corsConfig))
+// app.options("*", cors(corsConfig))
+// app.use(express.json())
+// app.use(function (req, res, next) {
+//     res.header("Access-Control-Allow-Origin",
+//         "*")
+//     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With,Content-Type, Accept,authorization")
+//     next()
+// })
 
 
 function verifyJWT(req, res, next) {
@@ -60,15 +60,18 @@ async function run() {
 
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email
+            console.log(email);
             const user = req.body
+            console.log(user);
             const filter = { email: email }
             const options = { upsert: true };
             const updateDoc = {
                 $set: user
             };
             const result = await Usercollection.updateOne(filter, updateDoc, options);
-            // const token = await jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
-            res.send(result)
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            console.log(token);
+            res.send({ result, token })
         })
 
         // Update User Info
@@ -78,7 +81,7 @@ async function run() {
             const filter = { email: email };
             const options = { upsert: true };
             const updateDocument = {
-                $set: updateUser
+                $set: { updateUser }
             };
             const result = await Usercollection.updateOne(filter, updateDocument, options)
 
@@ -96,23 +99,15 @@ async function run() {
         })
 
         // make admn api
-        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+        app.put('/user/admin/:email', async (req, res) => {
             const email = req.params.email
-            const requester = req.decoded.email
-            console.log(requester);
-            const requesterAccount = await Usercollection.findOne({ email: requester })
-            if (requesterAccount.role === 'admin') {
-                const filter = { email: email }
-                const options = { upsert: true };
-                const updateDoc = {
-                    $set: { role: 'admin' }
-                };
-                const result = await Usercollection.updateOne(filter, updateDoc);
-                res.send(result)
-            }
-            else {
-                res.status(403).send({ message: 'forbiden access' })
-            }
+            const filter = { email: email }
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: { role: 'admin' }
+            };
+            const result = await Usercollection.updateOne(filter, updateDoc);
+            res.send(result)
 
         })
 
