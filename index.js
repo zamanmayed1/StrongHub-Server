@@ -58,7 +58,7 @@ async function run() {
 
         // Send Logged User Data on server
 
-        app.put('/user/:email', async (req, res) => {
+        app.put('/user/:email', verifyJWT, async (req, res) => {
             const email = req.params.email
             const user = req.body
             const filter = { email: email }
