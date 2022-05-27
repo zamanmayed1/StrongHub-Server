@@ -58,7 +58,7 @@ async function run() {
 
         // Send Logged User Data on server
 
-        app.put('/user/:email', verifyJWT, async (req, res) => {
+        app.put('/user/:email', async (req, res) => {
             const email = req.params.email
             const user = req.body
             const filter = { email: email }
@@ -67,7 +67,7 @@ async function run() {
                 $set: user
             };
             const result = await Usercollection.updateOne(filter, updateDoc, options);
-            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            const token = await jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
             res.send({ result, token })
         })
 
