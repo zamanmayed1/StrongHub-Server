@@ -10,12 +10,12 @@ const app = express()
 // middleware
 app.use(cors());
 const corsConfig = {
-    origin: 'https://stronghub.herokuapp.com/',
+    origin: 'http://localhost:3000/',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE']
 }
 app.use(cors(corsConfig))
-app.options("https://stronghub.herokuapp.com/", cors(corsConfig))
+app.options("http://localhost:3000/", cors(corsConfig))
 app.use(express.json())
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin",
