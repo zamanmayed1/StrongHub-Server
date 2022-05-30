@@ -8,7 +8,11 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 const app = express()
 // middleware ALL
-app.use(cors({ origin: '*' }))
+const corsConfig = {
+    origin: "https://stronghub-9986c.web.app",
+    credentials: true,
+}
+app.use(cors(corsConfig))
 
 
 
