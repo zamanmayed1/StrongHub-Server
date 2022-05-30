@@ -7,10 +7,8 @@ require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 const app = express()
-// middleware
-app.use(cors({
-    origin: "*",
-}));
+// middleware ALL
+app.use(cors({ origin: '*' }))
 
 
 
@@ -49,7 +47,7 @@ async function run() {
 
         // Send Logged User Data on server
 
-        app.put('/user/:email', async (req, res) => {
+        app.put('/setuser/:email', async (req, res) => {
             const email = req.params.email
             const user = req.body
             const filter = { email: email }
