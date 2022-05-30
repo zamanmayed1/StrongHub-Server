@@ -55,7 +55,7 @@ async function run() {
             const filter = { email: email }
             const options = { upsert: true };
             const updateDoc = {
-                $set: user
+                $set: { user }
             };
             const result = await Usercollection.updateOne(filter, updateDoc, options);
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
@@ -85,7 +85,7 @@ async function run() {
             res.send({ admin: isAdmin })
         })
         // make admin
-        app.put('/user/admin/:email', async (req, res) => {
+        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
             const email = req.params.email
             const requester = req.decoded.email
             const requesterAccount = await Usercollection.findOne({ email: requester })
