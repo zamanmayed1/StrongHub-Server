@@ -9,7 +9,7 @@ const port = process.env.PORT || 5000;
 const app = express()
 // middleware
 app.use(cors({
-    origin: "https://stronghub-9986c.web.app/",
+    origin: "*",
 }));
 
 
