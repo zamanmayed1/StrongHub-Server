@@ -1,8 +1,8 @@
+require('dotenv').config()
 const express = require('express')
 const cors = require('cors');
-const bodyParser = require('body-parser')
 const jwt = require('jsonwebtoken');
-require('dotenv').config()
+
 // const stripe = require('stripe')(process.env.STRIPE_KEY)
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
@@ -10,10 +10,9 @@ const app = express()
 // middleware  all
 const corsConfig = {
     origin: "https://stronghub-9986c.web.app",
-    credentials: true,
 }
 app.use(cors(corsConfig))
-
+app.use(express.json())
 
 
 
@@ -164,7 +163,6 @@ async function run() {
             const order = req.body
             const result = await OrderCollection.insertOne(order);
             res.send(result)
-
         })
         // Get All Order
         app.get('/orders', async (req, res) => {
