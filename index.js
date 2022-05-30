@@ -80,15 +80,13 @@ async function run() {
         // Admin Check
         app.get('/admin/:email', async (req, res) => {
             const email = req.params.email
-            console.log(email);
             const user = await Usercollection.findOne({ email: email })
             const isAdmin = user.role == 'admin'
             res.send({ admin: isAdmin })
         })
         // make admin
-        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+        app.put('/user/admin/:email', async (req, res) => {
             const email = req.params.email
-
             const requester = req.decoded.email
             const requesterAccount = await Usercollection.findOne({ email: requester })
             if (requesterAccount.role === 'admin') {
